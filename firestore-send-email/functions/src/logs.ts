@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
+import * as admin from "firebase-admin";
 import config from "./config";
 import { logger } from "firebase-functions";
 
 export const obfuscatedConfig = Object.assign({}, config, {
   smtpConnectionUri: "<omitted>",
+  smtpPassword: "<omitted>",
 });
 
 export function init() {
@@ -40,12 +42,12 @@ export function complete() {
   logger.log("Completed execution of extension");
 }
 
-export function attemptingDelivery(ref: FirebaseFirestore.DocumentReference) {
+export function attemptingDelivery(ref: admin.firestore.DocumentReference) {
   logger.log(`Attempting delivery for message: ${ref.path}`);
 }
 
 export function delivered(
-  ref: FirebaseFirestore.DocumentReference,
+  ref: admin.firestore.DocumentReference,
   info: {
     messageId: string;
     accepted: string[];
@@ -54,23 +56,15 @@ export function delivered(
   }
 ) {
   logger.log(
-    `Delivered message: ${ref.path} successfully. messageId: ${
-      info.messageId
-    } accepted: ${info.accepted.length} rejected: ${
-      info.rejected.length
-    } pending: ${info.pending.length}`
+    `Delivered message: ${ref.path} successfully. messageId: ${info.messageId} accepted: ${info.accepted.length} rejected: ${info.rejected.length} pending: ${info.pending.length}`
   );
 }
 
 export function deliveryError(
-  ref: FirebaseFirestore.DocumentReference,
+  ref: admin.firestore.DocumentReference,
   e: Error
 ) {
   logger.error(`Error when delivering message=${ref.path}: ${e.toString()}`);
-}
-
-export function missingDeliveryField(ref: FirebaseFirestore.DocumentReference) {
-  logger.error(`message=${ref.path} is missing 'delivery' field`);
 }
 
 export function missingUids(uids: string[]) {
@@ -93,8 +87,14 @@ export function partialRegistered(name) {
   logger.log(`registered partial '${name}'`);
 }
 
-export function templateLoaded(name) {
-  logger.log(`loaded template '${name}'`);
+export function templatesLoaded(names) {
+  logger.log(`loaded templates (${names})`);
+}
+
+export function invalidMessage(message) {
+  logger.warn(
+    `message '${message}' is not a valid object and no handlebars template has been provided instead - please add as an object or firestore map, otherwise you may experience unexpected results.`
+  );
 }
 
 export function checkingMissingTemplate(name) {
@@ -103,4 +103,22 @@ export function checkingMissingTemplate(name) {
 
 export function foundMissingTemplate(name) {
   logger.log(`template '${name}' has been found`);
+}
+
+export function invalidURI() {
+  logger.warn(
+    "Invalid URI: please reconfigure with a valid SMTP connection URI"
+  );
+}
+
+export function invalidTlsOptions() {
+  logger.warn(
+    "Invalid TLS options provided, using default TLS options instead: `{ rejectUnauthorized: false }`"
+  );
+}
+
+export function invalidSendGridTemplateId() {
+  logger.error(
+    "SendGrid templateId is not provided, if you're using SendGrid Dynamic Templates, please provide a valid templateId, otherwise provide a `text` or `html` content."
+  );
 }

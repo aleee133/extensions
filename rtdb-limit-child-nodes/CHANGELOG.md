@@ -1,3 +1,41 @@
+## Version 0.1.14
+
+fixed - bump dependencies to fix vulnerabilities
+
+## Version 0.1.13
+
+fixed - bump dependencies, fix vulnerabilities (#2061)
+
+## Version 0.1.12
+
+fixed - updated vulnerable dependencies
+
+## Version 0.1.11
+
+build - updated depenencies
+
+## Version 0.1.10
+
+feature - bump to node 18
+
+## Version 0.1.9
+
+feature - bump to nodejs16
+
+## Version 0.1.8
+
+No changes.
+
+## Version 0.1.7
+
+feature - upgrade extensions to the latest firebase-admin sdk
+
+## Version 0.1.6
+
+fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
+
+fixed - update validate workflow to use node14
+
 ## Version 0.1.5
 
 feature - add Taiwan and Singapore Cloud Function locations (#729)

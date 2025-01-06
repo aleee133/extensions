@@ -15,8 +15,13 @@
  */
 
 export default {
+  doBackfill: process.env.DO_BACKFILL === "true",
   languages: Array.from(new Set(process.env.LANGUAGES.split(","))),
   location: process.env.LOCATION,
   inputFieldName: process.env.INPUT_FIELD_NAME,
   outputFieldName: process.env.OUTPUT_FIELD_NAME,
+  languagesFieldName: process.env.LANGUAGES_FIELD_NAME,
+  useGenkit: process.env.TRANSLATION_MODEL === "gemini",
+  geminiProvider: "googleai",
+  googleAIAPIKey: process.env.GOOGLE_AI_API_KEY,
 };

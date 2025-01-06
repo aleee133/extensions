@@ -1,12 +1,13 @@
-import * as firebase from "firebase-admin";
-import { CliConfig, SerializableQuery, QueryOptions } from "./types";
-import { worker } from "workerpool";
-
 import {
   ChangeType,
   FirestoreBigQueryEventHistoryTracker,
   FirestoreDocumentChangeEvent,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
+import * as firebase from "firebase-admin";
+import { worker } from "workerpool";
+import { getRowsFromDocs } from "./helper";
+
+import { CliConfig, QueryOptions, SerializableQuery } from "./types";
 
 async function processDocuments(
   serializableQuery: SerializableQuery,
@@ -23,6 +24,7 @@ async function processDocuments(
   if (!firebase.apps.length) {
     // Initialize Firebase
     firebase.initializeApp({
+      projectId: projectId,
       credential: firebase.credential.applicationDefault(),
       databaseURL: `https://${projectId}.firebaseio.com`,
     });
@@ -30,7 +32,11 @@ async function processDocuments(
 
   const query = firebase
     .firestore()
-    .collectionGroup(sourceCollectionPath)
+    .collectionGroup(
+      sourceCollectionPath.split("/")[
+        sourceCollectionPath.split("/").length - 1
+      ]
+    )
     .orderBy(firebase.firestore.FieldPath.documentId(), "asc") as QueryOptions;
 
   query._queryOptions.startAt = serializableQuery.startAt;
@@ -45,27 +51,22 @@ async function processDocuments(
       docs[docs.length - 1].id
     }`
   );
-
+  // TODO: fix this type. I think these parameters might need to be optional.
+  // @ts-expect-error
   const dataSink = new FirestoreBigQueryEventHistoryTracker({
     tableId,
     datasetId,
     datasetLocation,
   });
+  // TODO: fix type
+  // @ts-expect-error
+  const rows: FirestoreDocumentChangeEvent = getRowsFromDocs(docs, config);
 
-  const rows: FirestoreDocumentChangeEvent = docs.map((document) => {
-    return {
-      timestamp: new Date(0).toISOString(),
-      operation: ChangeType.IMPORT,
-      documentName: `projects/${projectId}/databases/(default)/documents/${
-        document.ref.path
-      }`,
-      documentId: document.id,
-      eventId: "",
-      data: document.data(),
-    };
-  });
-
+  // TODO: fix type
+  // @ts-expect-error
   await dataSink.record(rows);
+  // TODO: fix type
+  // @ts-expect-error
   return rows.length;
 }
 

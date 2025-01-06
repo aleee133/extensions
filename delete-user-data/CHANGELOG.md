@@ -1,3 +1,67 @@
+## Version 0.1.23
+
+fixed - bump dependencies to fix vulnerabilities
+
+## Version 0.1.22
+
+fixed - recursive delete searched docs if enabled (#2073)
+
+## Version 0.1.21
+
+fixed - fix autodiscovery recursive deletion
+
+fixed - update dependencies and fix vulnerabilities
+
+## Version 0.1.20
+
+fix - update regex for RTDB instance param
+
+## Version 0.1.19
+
+chore(delete-user-data): remove firebase-tools dependency
+
+## Version 0.1.18
+
+feature - bump to node 18
+
+## Version 0.1.17
+
+feature - bump to nodejs16
+
+## Version 0.1.16
+
+fixed - Increase UID checks on search based deletions
+
+## Version 0.1.15
+
+feature - upgrade extensions to the latest firebase-admin sdk
+
+## Version 0.1.14
+
+feature - add auto discovery mechanisms + update documentation
+
+feature - upgrade to the latest emulator updates (#995)
+
+fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
+
+fixed - add RTDB locations function (#865)
+
+fixed - updated typescript compiler
+
+## Version 0.1.13
+
+fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
+
+fixed - add RTDB locations function (#865)
+
+fixed - updated typescript compiler
+
+fixed - update validate workflow to use node14
+
+## Version 0.1.12
+
+fixed - updated dependencies
+
 ## Version 0.1.11
 
 feature - add Taiwan and Singapore Cloud Function locations (#729)

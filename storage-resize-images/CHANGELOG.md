@@ -1,3 +1,125 @@
+## Version 0.2.6
+
+fixed - bump dependencies, fix vulnerabilities
+
+## Version 0.2.5
+
+fixed - bump dependencies, fix vulnerabilities (#2061)
+
+## Version 0.2.4
+
+fixed - bumped dependencies to latest versions, addressing dependency vulnerabilities
+
+## Version 0.2.3
+
+docs - add a sample explaining how to use custom events
+
+docs - update the description of the `SHARP_OPTIONS` param to include an explanation of the `fit` option
+
+feat - allow regenerating new tokens for resized images
+
+## Version 0.2.2
+
+feature - allow custom fit option
+
+feature - add 4 and 8 GB memory options
+
+## Version 0.2.1
+
+feature - allow custom sharp.js options
+
+fix - convert storage path separators on windows
+
+## Version 0.2.0
+
+fixed - added safeguards for travsersed paths on failed image uploads
+
+build - updated depenencies
+
+## Version 0.1.39
+
+fixed - add support for jpg content types
+
+## Version 0.1.38
+
+feature - bump to node 18
+
+## Version 0.1.37
+
+feature - bump to nodejs16
+
+fixed - correct include path list description
+
+## Version 0.1.36
+
+fixed - added fixes for gcs vulnerabilities
+
+## Version 0.1.35
+
+feature - handle jfif extensions correctly
+
+## Version 0.1.34
+
+feature - upgrade extensions to the latest firebase-admin sdk
+
+fixed - support backfill task in custom region
+
+feature - add description to the failedImagesPath param
+
+feature - put failed resizes in separate directory #563
+
+## Version 0.1.33
+
+fixed - re-add input object data to the complete event
+
+## Version 0.1.32
+
+feature - added lifecycle event to resize existing images
+
+## Version 0.1.31
+
+feature - add AVIF codec support
+
+feature - update IMG_BUCKET param type to selectResource
+
+## Version 0.1.30
+
+feature - include original image data in events
+
+## Version 0.1.29
+
+fixed - add size to metadata
+
+feature - add an option to make the resized images public
+
+fixed - updated sharp lib dependency for improved compression algorithm
+
+## Version 0.1.28
+
+feature - added extension event for image resize completion (#967)
+
+## Version 0.1.27
+
+fixed - update to firebase-admin v10 (#935)
+
+feature - add output options param, to support [Sharp Output Options](https://sharp.pixelplumbing.com/api-output#jpeg) (#878)
+
+## Version 0.1.26
+
+fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
+
+fixed - update resized metadata content disposition (#839)
+
+feature - add WEBP and GIF animation (#875)
+
+fixed - update validate workflow to use node14
+
+fixed - fix samsung encoded jpg resizing
+
+## Version 0.1.25
+
+fixed - fix errors when resizing Samsung-encoded JPEGs
+
 ## Version 0.1.24
 
 fixed - update package lock file to fix installation errors (#782)

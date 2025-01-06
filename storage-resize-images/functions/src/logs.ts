@@ -15,7 +15,7 @@
  */
 
 import { logger } from "firebase-functions";
-import config from "./config";
+import { config } from "./config";
 
 export const complete = () => {
   logger.log("Completed execution of extension");
@@ -51,7 +51,7 @@ export const error = (err: Error) => {
 };
 
 export const errorDeleting = (err: Error) => {
-  logger.warn("Error when deleting temporary files", err);
+  logger.warn("Error when deleting files", err);
 };
 
 export const failed = () => {
@@ -60,6 +60,12 @@ export const failed = () => {
 
 export const imageAlreadyResized = () => {
   logger.log("File is already a resized image, no processing is required");
+};
+
+export const imageFailedAttempt = () => {
+  logger.log(
+    "File is a copy of an image which failed to resize, no processing is required"
+  );
 };
 
 export const imageOutsideOfPaths = (
@@ -160,3 +166,46 @@ export const remoteFileDeleted = (path: string) => {
 export const remoteFileDeleting = (path: string) => {
   logger.log(`Deleting original file from storage bucket: '${path}'`);
 };
+
+export const errorOutputOptionsParse = (err: any) => {
+  logger.error(
+    `Error while parsing "Output options for selected format". Parameter will be ignored`,
+    err
+  );
+};
+
+export const startBackfill = () => {
+  logger.log("Starting backfill job. Checking for existing images to resize.");
+};
+
+export const continueBackfill = (fileName: string) => {
+  logger.log(`Checking if '${fileName}' needs to resized`);
+};
+
+export const backfillComplete = (success: number, failures: number) => {
+  logger.log(
+    `Finished backfill. Successfully resized ${success} images. Failed to resize ${failures} images.`
+  );
+};
+export const failedImageUploading = (path: string) => {
+  logger.log(
+    `Uploading failed image to the failed images directory: '${path}'`
+  );
+};
+
+export const failedImageUploaded = (path: string) => {
+  logger.log(`Uploaded failed image to the failed images directory: '${path}'`);
+};
+
+export function errorConstuctorOptionsParse(err: any) {
+  logger.warn(
+    `Error while parsing "Constructor options". Parameter will be ignored`,
+    err
+  );
+}
+
+export function invalidFailedResizePath(failedFilePath: string) {
+  logger.warn(
+    `Cannot upload failed resize image '${failedFilePath}' in the failed images directory (${config.failedImagesPath})`
+  );
+}

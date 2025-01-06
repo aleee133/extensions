@@ -1,13 +1,17 @@
-import * as inquirer from "inquirer";
 import * as program from "commander";
+import * as filenamify from "filenamify";
+import * as inquirer from "inquirer";
 
-import { CliConfig } from "./types";
+import { CliConfig, CliConfigError } from "./types";
 
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
-const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
+// regex of ^[^/]+(/[^/]+/[^/]+)*$
+export const FIRESTORE_VALID_CHARACTERS = new RegExp("^[^/]+(/[^/]+/[^/]+)*$");
+// export const FIRESTORE_VALID_CHARACTERS = /^[^/]+(/[^/]+/[^/]+)*$/;
+const GCP_PROJECT_VALID_CHARACTERS = /^[a-z][a-z0-9-]{0,29}$/;
 
 const PROJECT_ID_MAX_CHARS = 6144;
-const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
+export const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
 const BIGQUERY_RESOURCE_NAME_MAX_CHARS = 1024;
 
 const validateBatchSize = (value: string) => {
@@ -24,6 +28,8 @@ const validateLocation = (value: string) => {
     "us-west3",
     "southamerica-east1",
     "us-east1",
+    "europe-central2",
+    "europe-north1",
     "europe-west1",
     "europe-north1",
     "europe-west3",
@@ -47,7 +53,7 @@ const validateLocation = (value: string) => {
   return index !== -1;
 };
 
-const validateInput = (
+export const validateInput = (
   value: string,
   name: string,
   regex: RegExp,
@@ -60,7 +66,7 @@ const validateInput = (
     return `${name} must be at most ${sizeLimit} characters long`;
   }
   if (!value.match(regex)) {
-    return `The ${name} must only contain letters or spaces`;
+    return `The ${name} does not match the regular expression provided`;
   }
   return true;
 };
@@ -74,7 +80,20 @@ const questions = [
       validateInput(
         value,
         "project ID",
-        FIRESTORE_VALID_CHARACTERS,
+        GCP_PROJECT_VALID_CHARACTERS,
+        PROJECT_ID_MAX_CHARS
+      ),
+  },
+  {
+    message: "What is your BigQuery project ID?",
+    name: "bigQueryProject",
+    type: "input",
+    default: process.env.PROJECT_ID,
+    validate: (value) =>
+      validateInput(
+        value,
+        "BigQuery project ID",
+        GCP_PROJECT_VALID_CHARACTERS,
         PROJECT_ID_MAX_CHARS
       ),
   },
@@ -145,55 +164,152 @@ const questions = [
     type: "confirm",
     default: false,
   },
+  {
+    message: "Would you like to use the new optimized snapshot query script?",
+    name: "useNewSnapshotQuerySyntax",
+    type: "confirm",
+    default: false,
+  },
+  {
+    message: "Would you like to use a local firestore emulator?",
+    name: "useEmulator",
+    type: "confirm",
+    default: false,
+  },
 ];
 
-export async function parseConfig(): Promise<CliConfig> {
+export async function parseConfig(): Promise<CliConfig | CliConfigError> {
   program.parse(process.argv);
 
   if (program.nonInteractive) {
-    if (
-      program.project === undefined ||
-      program.sourceCollectionPath === undefined ||
-      program.dataset === undefined ||
-      program.tableNamePrefix === undefined ||
-      program.queryCollectionGroup === undefined ||
-      program.batchSize === undefined ||
-      program.datasetLocation === undefined ||
-      program.multiThreaded === undefined ||
-      !validateBatchSize(program.batchSize)
-    ) {
-      program.outputHelp();
-      process.exit(1);
+    const errors = [];
+    if (program.project === undefined) {
+      errors.push("Project is not specified.");
     }
+    if (program.bigQueryProject === undefined) {
+      errors.push("BigQuery Project is not specified.");
+    }
+    if (program.sourceCollectionPath === undefined) {
+      errors.push("SourceCollectionPath is not specified.");
+    }
+    if (program.dataset === undefined) {
+      errors.push("Dataset ID is not specified.");
+    }
+    if (program.tableNamePrefix === undefined) {
+      errors.push("TableNamePrefix is not specified.");
+    }
+    if (program.queryCollectionGroup === undefined) {
+      errors.push("QueryCollectionGroup is not specified.");
+    }
+    if (program.batchSize === undefined) {
+      errors.push("BatchSize is not specified.");
+    }
+    if (program.datasetLocation === undefined) {
+      errors.push("DatasetLocation is not specified.");
+    }
+    if (!validateBatchSize(program.batchSize)) {
+      errors.push("Invalid batch size.");
+    }
+
+    if (errors.length !== 0) {
+      program.outputHelp();
+      return { kind: "ERROR", errors };
+    }
+
+    const rawChangeLogName = `${program.tableNamePrefix}_raw_changelog`;
+    const cursorPositionFile = getCursorPositionFile(
+      program.sourceCollectionPath,
+      program.project,
+      program.dataset,
+      rawChangeLogName
+    );
+
     return {
+      kind: "CONFIG",
       projectId: program.project,
+      bigQueryProjectId: program.bigQueryProject,
       sourceCollectionPath: program.sourceCollectionPath,
       datasetId: program.dataset,
       tableId: program.tableNamePrefix,
-      batchSize: program.batchSize,
+      batchSize: parseInt(program.batchSize),
       queryCollectionGroup: program.queryCollectionGroup === "true",
       datasetLocation: program.datasetLocation,
       multiThreaded: program.multiThreaded === "true",
+      useNewSnapshotQuerySyntax: program.useNewSnapshotQuerySyntax === "true",
+      useEmulator: program.useEmulator === "true",
+      rawChangeLogName,
+      cursorPositionFile,
     };
   }
   const {
     project,
     sourceCollectionPath,
+    bigQueryProject,
     dataset,
     table,
     batchSize,
     queryCollectionGroup,
     datasetLocation,
     multiThreaded,
+    useNewSnapshotQuerySyntax,
+    useEmulator,
   } = await inquirer.prompt(questions);
+
+  const rawChangeLogName = `${table}_raw_changelog`;
+  const cursorPositionFile = getCursorPositionFile(
+    sourceCollectionPath,
+    project,
+    dataset,
+    rawChangeLogName
+  );
+
   return {
+    kind: "CONFIG",
     projectId: project,
+    bigQueryProjectId: bigQueryProject,
     sourceCollectionPath: sourceCollectionPath,
     datasetId: dataset,
     tableId: table,
-    batchSize: batchSize,
+    batchSize: parseInt(batchSize),
     queryCollectionGroup: queryCollectionGroup,
     datasetLocation: datasetLocation,
     multiThreaded: multiThreaded,
+    useNewSnapshotQuerySyntax: useNewSnapshotQuerySyntax,
+    useEmulator: useEmulator,
+    rawChangeLogName,
+    cursorPositionFile,
   };
+}
+
+/**
+ *
+ * @param template - eg, regions/{regionId}/countries
+ * @param text - eg, regions/asia/countries
+ *
+ * @return - eg, { regionId: "asia" }
+ */
+export const resolveWildcardIds = (template: string, text: string) => {
+  const textSegments = text.split("/");
+  return template
+    .split("/")
+    .reduce((previousValue, currentValue, currentIndex) => {
+      if (currentValue.startsWith("{") && currentValue.endsWith("}")) {
+        previousValue[currentValue.slice(1, -1)] = textSegments[currentIndex];
+      }
+      return previousValue;
+    }, {});
+};
+
+function getCursorPositionFile(
+  sourceCollectionPath: string,
+  projectId: string,
+  datasetId: string,
+  rawChangeLogName: string
+) {
+  // TODO: make this part of config, set it in CliConfig
+  const formattedPath = filenamify(sourceCollectionPath);
+  return (
+    __dirname +
+    `/from-${formattedPath}-to-${projectId}_${datasetId}_${rawChangeLogName}`
+  );
 }

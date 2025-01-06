@@ -1,3 +1,45 @@
+## Version 0.1.17
+
+fixed - bump dependencies, fix vulnerabilities
+
+## Version 0.1.16
+
+fixed - bump dependencies, fix vulnerabilities (#2061)
+
+## Version 0.1.15
+
+fixed - updated vulnerable dependencies
+
+## Version 0.1.14
+
+feature - add optional custom events
+
+## Version 0.1.13
+
+build - updated depenencies
+
+## Version 0.1.12
+
+feature - bump to node 18
+
+## Version 0.1.11
+
+feature - bump to nodejs16
+
+## Version 0.1.10
+
+No changes.
+
+## Version 0.1.9
+
+feature - upgrade extensions to the latest firebase-admin sdk
+
+## Version 0.1.8
+
+fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
+
+fixed - update validate workflow to use node14
+
 ## Version 0.1.7
 
 fixed - changed Bitly access token configuration from string type to secret type (#752)

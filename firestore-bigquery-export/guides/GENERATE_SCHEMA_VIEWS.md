@@ -1,19 +1,19 @@
 The `fs-bq-schema-views` script is for use with the official Firebase Extension
-[_Export Collections to BigQuery_](https://github.com/firebase/extensions/tree/master/firestore-bigquery-export).
+[_Stream Firestore to BigQuery_](https://github.com/firebase/extensions/tree/master/firestore-bigquery-export).
 
 ## Overview
 
 The `fs-bq-schema-views` script (referred to as the "schema-views script")
 generates richly-typed BigQuery views of your raw changelog.
 
-The _Export Collections to BigQuery_ extension only mirrors raw data, but it
+The _Stream Firestore to BigQuery_ extension only mirrors raw data, but it
 doesn't apply schemas or types. This decoupling makes schema validation less
 risky because no data can be lost due to schema mismatch or unknown fields.
 
 The schema-views script creates a BigQuery view, based on a JSON schema
 configuration file, using
 [BigQuery's built-in JSON functions](https://cloud.google.com/bigquery/docs/reference/standard-sql/json_functions).
-The _Export Collections to BigQuery_ extension also provides some BigQuery
+The _Stream Firestore to BigQuery_ extension also provides some BigQuery
 [user-defined functions](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/scripts/gen-schema-view/src/udf.ts)
 that are helpful in converting Firestore document properties to richly-typed
 BigQuery cells.
@@ -94,6 +94,8 @@ installation of the extension:
 
 - `${param:PROJECT_ID}`: the project ID for the Firebase project in
   which you installed the extension
+- `${param:BIGQUERY_PROJECT_ID}`: the project ID for the GCP project that contains
+  the BigQuery instance.
 - `${param:DATASET_ID}`: the ID that you specified for your dataset during
   extension installation
 - `${param:TABLE_ID}`: the common prefix of BigQuery views to generate
@@ -116,6 +118,7 @@ via `npm` (the Node Package Manager).
     $ npx @firebaseextensions/fs-bq-schema-views \
       --non-interactive \
       --project=${param:PROJECT_ID} \
+      --big-query-project=${param:BIGQUERY_PROJECT_ID} \
       --dataset=${param:DATASET_ID} \
       --table-name-prefix=${param:TABLE_ID} \
       --schema-files=./test_schema.json

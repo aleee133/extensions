@@ -115,3 +115,13 @@ export const storagePath404 = (path: string) => {
 export const storagePathError = (path: string, err: Error) => {
   logger.error(`Error deleting: '${path}' from Cloud Storage`, err);
 };
+
+export const customFunctionError = (err: Error) => {
+  logger.error(`Call to custom hook function threw an error`, err);
+};
+
+export function warnInvalidPaths(invalidPathCount: number, uid: string) {
+  logger.warn(
+    `Attempted to delete ${invalidPathCount} invalid paths for deleted user ${uid}`
+  );
+}

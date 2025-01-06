@@ -26,6 +26,7 @@ import { readSchemas } from "./schema-loader-utils";
 
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
 const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
+const GCP_PROJECT_VALID_CHARACTERS = /^[a-z][a-z0-9-]{0,29}$/;
 
 const validateInput = (value: any, name: string, regex: RegExp) => {
   if (!value || value === "" || value.trim() === "") {
@@ -41,8 +42,12 @@ function collect(value, previous) {
   return previous.concat([value]);
 }
 
+const packageJson = require("../package.json");
+
 program
   .name("gen-schema-views")
+  .description(packageJson.description)
+  .version(packageJson.version)
   .option(
     "--non-interactive",
     "Parse all input from command line flags instead of prompting the caller.",
@@ -51,6 +56,10 @@ program
   .option(
     "-P, --project <project>",
     "Firebase Project ID for project containing Cloud Firestore database."
+  )
+  .option(
+    "-B, --big-query-project <big-query-project>",
+    "Google Cloud Project ID for BigQuery (can be the same as the Firebase project ID)."
   )
   .option(
     "-d, --dataset <dataset>",
@@ -71,9 +80,19 @@ const questions = [
   {
     message: "What is your Firebase project ID?",
     name: "project",
+    default: process.env.PROJECT_ID,
     type: "input",
     validate: (value) =>
       validateInput(value, "project ID", FIRESTORE_VALID_CHARACTERS),
+  },
+  {
+    message:
+      "What is your Google Cloud Project ID for BigQuery? (can be the same as the Firebase project ID)",
+    name: "bigQueryProject",
+    default: process.env.PROJECT_ID,
+    type: "input",
+    validate: (value) =>
+      validateInput(value, "BigQuery project ID", GCP_PROJECT_VALID_CHARACTERS),
   },
   {
     message:
@@ -101,6 +120,7 @@ const questions = [
 
 interface CliConfig {
   projectId: string;
+  bigQueryProjectId: string;
   datasetId: string;
   tableNamePrefix: string;
   schemas: { [schemaName: string]: FirestoreSchema };
@@ -113,19 +133,23 @@ async function run(): Promise<number> {
   // Set project ID so it can be used in BigQuery intialization
   process.env.PROJECT_ID = config.projectId;
   // BigQuery actually requires this variable to set the project correctly.
-  process.env.GOOGLE_CLOUD_PROJECT = config.projectId;
+  process.env.GOOGLE_CLOUD_PROJECT = config.bigQueryProjectId;
 
   // Initialize Firebase
-  firebase.initializeApp({
-    credential: firebase.credential.applicationDefault(),
-    databaseURL: `https://${config.projectId}.firebaseio.com`,
-  });
+  if (!firebase.apps.length) {
+    firebase.initializeApp({
+      credential: firebase.credential.applicationDefault(),
+      databaseURL: `https://${config.projectId}.firebaseio.com`,
+    });
+  }
 
   // @ts-ignore string not assignable to enum
   if (Object.keys(config.schemas).length === 0) {
     console.log(`No schema files found!`);
   }
-  const viewFactory = new FirestoreBigQuerySchemaViewFactory();
+  const viewFactory = new FirestoreBigQuerySchemaViewFactory(
+    config.bigQueryProjectId
+  );
   for (const schemaName in config.schemas) {
     await viewFactory.initializeSchemaViewResources(
       config.datasetId,
@@ -142,6 +166,7 @@ async function parseConfig(): Promise<CliConfig> {
   if (program.nonInteractive) {
     if (
       program.project === undefined ||
+      program.bigQueryProject === undefined ||
       program.dataset === undefined ||
       program.tableNamePrefix === undefined ||
       program.schemaFiles.length === 0
@@ -149,21 +174,21 @@ async function parseConfig(): Promise<CliConfig> {
       program.outputHelp();
       process.exit(1);
     }
+
     return {
       projectId: program.project,
+      bigQueryProjectId: program.bigQueryProject,
       datasetId: program.dataset,
       tableNamePrefix: program.tableNamePrefix,
       schemas: readSchemas(program.schemaFiles),
     };
   }
-  const {
-    project,
-    dataset,
-    tableNamePrefix,
-    schemaFiles,
-  } = await inquirer.prompt(questions);
+  const { project, bigQueryProject, dataset, tableNamePrefix, schemaFiles } =
+    await inquirer.prompt(questions);
+
   return {
     projectId: project,
+    bigQueryProjectId: bigQueryProject,
     datasetId: dataset,
     tableNamePrefix: tableNamePrefix,
     schemas: readSchemas(
